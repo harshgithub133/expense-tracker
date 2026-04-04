@@ -3,7 +3,12 @@ import datetime
 def add_expense():
     name = input("Enter expense name: ")
     category = input("Enter category (Food/Travel/Other): ")
-    amount = float(input("Enter amount: "))
+    
+    try:
+        amount = float(input("Enter amount: "))
+    except ValueError:
+        print("Invalid amount! Please enter a number.")
+        return
     
     date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
@@ -18,8 +23,25 @@ def view_expenses():
             total = 0
             print("\n--- Your Expenses ---")
             
-            for line in file:
-                name, category, amount, date = line.strip().split(",")
+            lines = file.readlines()
+            
+            if not lines:
+                print("No expenses found!")
+                return
+            
+            for line in lines:
+                parts = line.strip().split(",")
+                
+                # Handle both old and new data formats
+                if len(parts) == 4:
+                    name, category, amount, date = parts
+                elif len(parts) == 3:
+                    name, category, amount = parts
+                    date = "No Date"
+                else:
+                    print("Skipping invalid data...")
+                    continue
+                
                 print(f"{date} | {name} ({category}): ₹{amount}")
                 total += float(amount)
             
@@ -35,15 +57,20 @@ def monthly_total():
         
         with open("expenses.txt", "r") as file:
             for line in file:
-                name, category, amount, date = line.strip().split(",")
-                if date.startswith(month):
-                    total += float(amount)
+                parts = line.strip().split(",")
+                
+                if len(parts) == 4:
+                    name, category, amount, date = parts
+                    
+                    if date.startswith(month):
+                        total += float(amount)
         
         print(f"Total expenses for {month}: ₹{total}")
     
     except FileNotFoundError:
         print("No data found!")
 
+# Main Program Loop
 while True:
     print("\n1. Add Expense")
     print("2. View Expenses")
